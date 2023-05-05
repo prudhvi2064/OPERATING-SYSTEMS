@@ -1,0 +1,81 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <unistd.h>
+
+#define NUM_PHILOSOPHERS 5
+#define NUM_MEALS 3
+
+// Define the semaphores
+sem_t chopsticks[NUM_PHILOSOPHERS];
+
+// Function executed by each philosopher thread
+void *philosopher(void *arg) {
+    int philosopher_id = *(int *)arg;
+    int left_chopstick = philosopher_id;
+    int right_chopstick = (philosopher_id + 1) % NUM_PHILOSOPHERS;
+    int meals_eaten = 0;
+
+    while (meals_eaten < NUM_MEALS) {
+        // Think
+        printf("Philosopher %d is thinking\n", philosopher_id);
+        sleep(1);
+
+        // Pick up left chopstick
+        sem_wait(&chopsticks[left_chopstick]);
+        printf("Philosopher %d picked up chopstick %d\n", philosopher_id, left_chopstick);
+
+        // Pick up right chopstick
+        sem_wait(&chopsticks[right_chopstick]);
+        printf("Philosopher %d picked up chopstick %d\n", philosopher_id, right_chopstick);
+
+        // Eat
+        printf("Philosopher %d is eating\n", philosopher_id);
+        sleep(1);
+        meals_eaten++;
+
+        // Put down right chopstick
+        sem_post(&chopsticks[right_chopstick]);
+        printf("Philosopher %d put down chopstick %d\n", philosopher_id, right_chopstick);
+
+        // Put down left chopstick
+        sem_post(&chopsticks[left_chopstick]);
+        printf("Philosopher %d put down chopstick %d\n", philosopher_id, left_chopstick);
+    }
+
+    pthread_exit(NULL);
+}
+
+int main() {
+    pthread_t philosophers[NUM_PHILOSOPHERS];
+    int philosopher_args[NUM_PHILOSOPHERS];
+    int i, result;
+
+    // Initialize the semaphores
+    for (i = 0; i < NUM_PHILOSOPHERS; i++) {
+        sem_init(&chopsticks[i], 0, 1);
+    }
+
+    // Create philosopher threads
+    for (i = 0; i < NUM_PHILOSOPHERS; i++) {
+        philosopher_args[i] = i;
+        result = pthread_create(&philosophers[i], NULL, philosopher, (void *)&philosopher_args[i]);
+        if (result) {
+            printf("Error creating philosopher thread %d: %d\n", i, result);
+            exit(-1);
+        }
+    }
+
+    // Wait for philosopher threads to complete
+    for (i = 0; i < NUM_PHILOSOPHERS; i++) {
+        pthread_join(philosophers[i], NULL);
+    }
+
+    // Destroy the semaphores
+    for (i = 0; i < NUM_PHILOSOPHERS; i++) {
+        sem_destroy(&chopsticks[i]);
+    }
+
+    return 0;
+}
