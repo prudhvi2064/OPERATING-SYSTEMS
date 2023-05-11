@@ -1,0 +1,101 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+int size = 8;
+int disk_size = 200;
+
+void CSCAN(int arr[], int head)
+{
+    int seek_count = 0;
+    int distance, cur_track;
+    int left[size], right[size];
+    int left_count = 0, right_count = 0;
+
+    
+    left[left_count++] = 0;
+    right[right_count++] = disk_size - 1;
+
+    
+    for (int i = 0; i < size; i++) {
+        if (arr[i] < head)
+            left[left_count++] = arr[i];
+        if (arr[i] > head)
+            right[right_count++] = arr[i];
+    }
+
+    // sorting left and right arrays
+    for (int i = 0; i < left_count; i++) {
+        for (int j = i + 1; j < left_count; j++) {
+            if (left[i] < left[j]) {
+                int temp = left[i];
+                left[i] = left[j];
+                left[j] = temp;
+            }
+        }
+    }
+
+    for (int i = 0; i < right_count; i++) {
+        for (int j = i + 1; j < right_count; j++) {
+            if (right[i] > right[j]) {
+                int temp = right[i];
+                right[i] = right[j];
+                right[j] = temp;
+            }
+        }
+    }
+
+    
+    for (int i = 0; i < right_count; i++) {
+        cur_track = right[i];
+        
+        distance = abs(cur_track - head);
+
+        
+        seek_count += distance;
+
+        
+        head = cur_track;
+    }
+
+    
+    head = 0;
+
+    
+    seek_count += (disk_size - 1);
+
+    
+    for (int i = 0; i < left_count; i++) {
+        cur_track = left[i];
+
+        
+        distance = abs(cur_track - head);
+
+       
+        seek_count += distance;
+
+       
+        head = cur_track;
+    }
+
+    printf("Total number of seek operations = %d\n", seek_count);
+
+    printf("Seek Sequence is:\n");
+
+    for (int i = 0; i < size; i++) {
+        printf("%d\n", arr[i]);
+    }
+}
+
+// Driver code
+int main()
+{
+
+    int arr[size] = { 176, 79, 34, 60, 92, 11, 41, 114 };
+    int head = 50;
+
+    printf("Initial position of head: %d\n", head);
+    CSCAN(arr, head);
+
+    return 0;
+}
